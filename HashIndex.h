@@ -228,22 +228,6 @@ public:
             }
         }
     }
-
-    void
-    init_from_csv (std::string file_name)
-    {
-        std::ifstream ifs(file_name);
-        std::string line;
-        while(std::getline(ifs, line))
-        {
-            boost::tokenizer<boost::escaped_list_separator<char> > tokens(line);
-            for(boost::tokenizer<boost::escaped_list_separator<char> >::iterator it = tokens.begin();
-                it != tokens.end(); ++it)
-            {
-                std::cout << *it << std::endl;
-            }
-        }
-    }
 };
 
 #endif /* HASH_INDEX_H */
