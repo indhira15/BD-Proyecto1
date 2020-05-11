@@ -46,6 +46,7 @@ private:
         {
             Bucket b{};
             ofs.write((char *)&b, sizeof(b));
+            ofs.flush();
         }
     }
 
@@ -86,14 +87,13 @@ public:
             while(std::getline(ifs, line))
             {
                 line.erase( std::remove(line.begin(), line.end(), '\r'), line.end() );
-                std::cout << "a" << std::endl;
                 boost::tokenizer<boost::escaped_list_separator<char> > tokens(line);
                 v.assign(tokens.begin(), tokens.end());
                 if(v.size() < 4)
                     continue;
                 Rating r = {boost::lexical_cast<uint64_t>(v[0]),
                             boost::lexical_cast<uint64_t>(v[1]),
-                            boost::lexical_cast<float>(v[2]),
+                            (int)(std::stod(v[2])*10)/10.0,
                             boost::lexical_cast<uint64_t>(v[3]) };
                 insert(r, fs);
             }
@@ -114,7 +114,11 @@ public:
         for(std::size_t i = 0; i <= B; ++i)
         {
             ifs.read((char *)&b, sizeof(b));
-            std::cout << b.filled << std::endl;
+            if(b.filled)
+            {
+                std::cout << b.filled << " " << ifs.tellg() << std::endl;
+                return;
+            }
         }
     }
 
@@ -156,6 +160,7 @@ public:
                 b.ratings[b.filled++] = r;
                 fs.seekp(b_pos);
                 fs.write((char *)&b, sizeof(b));
+                fs.flush();
             }
             else
             {
@@ -165,10 +170,12 @@ public:
                     new_b.ratings[new_b.filled++] = r;
                     b.next = fs.tellp();
                     fs.write((char *)&new_b, sizeof(new_b));
+                    fs.flush();
                 }
                 {
                     fs.seekp(b_pos);
                     fs.write((char *)&b, sizeof(b));
+                    fs.flush();
                 }
             }
         }
@@ -185,10 +192,13 @@ public:
             offset += ifs.tellg();
             ifs.seekg(offset);
             ifs.read((char *)&b, sizeof(b));
-            std::cout << b.ratings[b.filled - 1].userId << std::endl;
-            std::cout << b.ratings[b.filled - 1].movieId << std::endl;
-            std::cout << b.ratings[b.filled - 1].rating << std::endl;
-            std::cout << b.ratings[b.filled - 1].timestamp << std::endl;
+            for(int i = 0; i < b.filled; ++i)
+            {
+                std::cout << b.ratings[b.filled - 1].userId << std::endl;
+                std::cout << b.ratings[b.filled - 1].movieId << std::endl;
+                std::cout << b.ratings[b.filled - 1].rating << std::endl;
+                std::cout << b.ratings[b.filled - 1].timestamp << std::endl;
+            }
         }
     }
 
@@ -216,7 +226,7 @@ public:
                         b.ratings[i] = r;
                         fs.seekp(b_pos);
                         fs.write((char *)&b, sizeof(b));
-                        fs.close();
+                        fs.flush();
                         return;
                     }
                 }

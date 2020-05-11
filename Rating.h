@@ -5,7 +5,7 @@ struct Rating
 {
     uint64_t userId;
     uint64_t movieId;
-    float rating;
+    double rating;
     uint64_t timestamp;
     Rating() = default;
 

@@ -67,7 +67,10 @@ main(int argc, char* argv[])
 */
 
     // Testing init from csv
-    HashIndex index = HashIndex("static/ratings.csv"); 
+    HashIndex index = HashIndex("static/ratings.csv");
+    index.check_init();
+    Rating r2{ 1, 307, 5, 2256677221 };
+    index.check_insert(r2);
 
     return 0;
 }
