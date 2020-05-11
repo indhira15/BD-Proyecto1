@@ -238,6 +238,39 @@ public:
             }
         }
     }
+
+    Rating
+    find(uint64_t userId, uint64_t movieId)
+    {
+        Bucket b{};
+        Rating r{userId, movieId};
+        long long offset = (h(r) + 1) * sizeof(b);
+        long long b_pos = 0;
+        {
+            std::ifstream ifs("data_hash.dat", ifs.binary);
+            b_pos = offset;
+            ifs.seekg(b_pos);
+            ifs.read((char *)&b, sizeof(b));
+            while(true)
+            {
+                for(std::size_t i = 0; i < F_R_; ++i)
+                {
+                    if(r == b.ratings[i])
+                        return b.ratings[i];
+                }
+                if(b.next != 0)
+                {
+                    ifs.seekg(b.next);
+                    ifs.read((char *)&b, sizeof(b));
+                }
+                else
+                {
+                    return Rating{};
+                }
+                
+            }
+        }
+    }
 };
 
 #endif /* HASH_INDEX_H */

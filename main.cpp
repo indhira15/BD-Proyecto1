@@ -66,11 +66,21 @@ main(int argc, char* argv[])
     index.check_insert(r1);
 */
 
+/*
     // Testing init from csv
     HashIndex index = HashIndex("static/ratings.csv");
     index.check_init();
     Rating r2{ 1, 307, 5, 2256677221 };
     index.check_insert(r2);
+*/
 
+/*
+    //Testing find
+    HashIndex index = HashIndex("static/ratings.csv");
+    Rating r = index.find(1, 307);
+    std::cout << r.userId << " " << r.movieId << " " << r.rating << std::endl;
+*/
+
+    // Falta cargar el HashIndex de disk (esto lo haré si sobra tiempo)
     return 0;
 }
