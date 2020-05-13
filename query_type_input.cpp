@@ -75,7 +75,7 @@ void QueryTypeInput::buttonClicked(QAbstractButton *button)
             inputQuery.setModal(true);
             inputQuery.setWindowFlags(Qt::FramelessWindowHint);
             rating = InputQueryDialog::getFields(this);
-            pair.first = Update;
+            pair.first = Insert;
             pair.second = rating;
             emit queryCreated(pair);
             accept();
