@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <boost/serialization/access.hpp>
-#include "Rating.h"
+#include "rating.h"
 #include "sizes.h"
 
 struct Bucket

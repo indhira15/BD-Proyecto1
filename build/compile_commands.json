@@ -1,7 +1,0 @@
-[
-{
-  "directory": "/Users/userr2232/Documents/miscProjects/UTEC/databases/project/build",
-  "command": "/usr/bin/clang++    -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk   -std=gnu++14 -o CMakeFiles/HashFileOrganization.dir/main.cpp.o -c /Users/userr2232/Documents/miscProjects/UTEC/databases/project/main.cpp",
-  "file": "/Users/userr2232/Documents/miscProjects/UTEC/databases/project/main.cpp"
-}
-]
