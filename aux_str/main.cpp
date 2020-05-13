@@ -11,8 +11,21 @@
 
 using namespace std;
 
+struct HashPair{
+  template<class T1, class T2>
+  size_t operator()(const pair<T1, T2>& p)const{
+    auto hash1 = hash<T1>{}(p.first);
+    auto hash2 = hash<T2>{}(p.second);
+    return hash1 ^ hash2;
+  }
+};
+
+typedef pair<uint64_t,uint64_t> IDS;
+typedef pair<IDS,size_t> index_entry;
+
 
 class RandomFile{
+  unordered_map<IDS, size_t,HashPair> index;
   size_t size;
   string random_file;
   string index_file;
@@ -43,6 +56,7 @@ public:
   void update_csv(string file_name);
   void print_file();
   void insert(Rating to_insert);
+  void update_index();
   Rating search(uint64_t user = 0, uint64_t movie = 0);
 };
 size_t RandomFile::get_size(){
@@ -101,7 +115,7 @@ void RandomFile::update_csv(string file_name){
         // aqui se debe insertar en el index
         ++num_ratings;
       }
-      set_size(num_ratings);
+      set_size(num_ratings + get_size());
       inFile.close();
       outFile.close();
       outIndex.close();
@@ -109,48 +123,89 @@ void RandomFile::update_csv(string file_name){
     }else cout << "Can't open the file "<<file_name <<endl;}
 
 void RandomFile::print_file(){
-    ifstream inFile;
-    cout << get_size() <<endl;
-    inFile.open(this->random_file, ios::binary);
-    if(inFile.is_open()){
-      Rating i;
-      while(inFile.read((char*)&i, sizeof(i))){
-        cout<<setw(6) << i.userId << setw(6) << i.movieId <<setw(6)
-         << i.rating << setw(15) << i.timestamp << endl;
+  ifstream inFile;
+  cout << get_size() <<endl;
+  inFile.open(this->random_file, ios::binary);
+  if(inFile.is_open()){
+    Rating i;
+    while(inFile.read((char*)&i, sizeof(i))){
+      cout<<setw(6) << i.userId << setw(6) << i.movieId <<setw(6)<< i.rating << setw(15) << i.timestamp << endl;
+    }
+    inFile.close();
+  }else cout << "No se pudo abrir el archivo" <<endl;
+}
 
-      }
-      inFile.close();
-    }else cout << "No se pudo abrir el archivo" <<endl;
-  }
-/*
 void RandomFile::insert(Rating to_insert){
   //Write on data file
   ofstream outFile;
-  outFile.open(random_file, ios::binary | ios::app);
+  outFile.open(random_file, ios::in | ios::binary | ios::app);
   if(outFile.is_open()){
     outFile.write((char*)& to_insert, sizeof(to_insert));
     outFile.close();
   }else{
     cout<<"Couldn't open the data file"<<endl;
-    return;
   }
 
   //Write on index file
-  pair<uint64_t, size_t> entry(to_insert.movieId,size);
+  index_entry entry;
+  entry.first.first = to_insert.userId;
+  entry.first.second = to_insert.movieId;
+  entry.second = get_size();
   ofstream indexFile;
-  indexFile.open("indexFile.dat", ios::binary | ios::app);
+  indexFile.open(index_file, ios::in| ios::binary | ios::app);
   if(indexFile.is_open()){
     indexFile.write((char*)& entry, sizeof(entry));
     indexFile.close();
+    set_size(entry.second + 1);
   }else{
     cout<<"Couldn't open the index file"<<endl;
     return;
   }
+}
+
+void RandomFile::update_index(){
+  ifstream indexFile;
+  indexFile.open(index_file, ios::binary);
+  if(indexFile.is_open()){
+    index_entry aux;
+
+    while(indexFile.read((char*)&aux, sizeof(aux))){
+      index.insert({aux.first,aux.second});
+    }
+    indexFile.close();
+  }else{
+    std::cout<<"Couldn't open the index file"<<std::endl;
+    return;
   }
-*/
+}
+
+Rating RandomFile::search(uint64_t userid_s, uint64_t movieid_s){
+  Rating ans;
+  IDS pair_s(userid_s,movieid_s);
+  size_t address;
+  RandomFile::update_index();
+  ifstream file;
+  if(index.find(pair_s) == index.end()){
+    std::cout<<"Not found"<<std::endl;
+    return ans;
+  }else{
+    address = index.find(pair_s)->second;
+    file.open(random_file, ios::binary);
+    file.seekg(address*sizeof(ans));
+    file.read((char*)&ans,sizeof(ans));
+    file.close();
+    std::cout<<"Found"<<std::endl;
+    return ans;
+  }
+}
+
+
 int main(){
+  Rating a{2,3363,4.0,1192913596};
   RandomFile rf("RandomFile");
   rf.update_csv("rating.csv");
+  rf.insert(a);
+  rf.search(2,3363);
   rf.print_file();
 
 
