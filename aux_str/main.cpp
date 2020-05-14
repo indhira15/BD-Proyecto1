@@ -9,6 +9,8 @@
 
 #include "Rating.h"
 
+#define RF_BLOCK_SIZE 4
+
 using namespace std;
 
 struct HashPair{
@@ -32,6 +34,7 @@ class RandomFile{
   string info_file;
   size_t get_size();
   void set_size(size_t new_size);
+
 public:
   RandomFile()= default;
   RandomFile(string name){
@@ -57,7 +60,9 @@ public:
   void print_file();
   void insert(Rating to_insert);
   void update_index();
-  Rating search(uint64_t user = 0, uint64_t movie = 0);
+  Rating search_openIndex(uint64_t user = 0, uint64_t movie = 0);
+  Rating search_fixedIndex(uint64_t user = 0, uint64_t movie = 0);
+  void read_index_from(size_t point);
 };
 size_t RandomFile::get_size(){
   ifstream inFile;
@@ -179,7 +184,21 @@ void RandomFile::update_index(){
   }
 }
 
-Rating RandomFile::search(uint64_t userid_s, uint64_t movieid_s){
+void RandomFile::read_index_from(size_t point){
+  ifstream indexFile;
+  indexFile.open(index_file, ios::binary);
+  if(indexFile.is_open()){
+    index_entry aux;
+    indexFile.seekg(point*sizeof(index_entry)*RF_BLOCK_SIZE);
+    for(size_t i = 0;i<RF_BLOCK_SIZE;i++){
+      if(indexFile.read((char*)&aux, sizeof(aux))){
+        index.insert({aux.first,aux.second});
+      }else{break;}
+    }
+  }
+}
+
+Rating RandomFile::search_openIndex(uint64_t userid_s, uint64_t movieid_s){
   Rating ans;
   IDS pair_s(userid_s,movieid_s);
   size_t address;
@@ -199,13 +218,37 @@ Rating RandomFile::search(uint64_t userid_s, uint64_t movieid_s){
   }
 }
 
+Rating RandomFile::search_fixedIndex(uint64_t userid_s, uint64_t movieid_s){
+  Rating ans;
+  IDS pair_s(userid_s,movieid_s);
+  size_t address;
+  ifstream file;
+  for(size_t i = 0; i<get_size()/RF_BLOCK_SIZE;i++){
+      index.clear();
+      read_index_from(i);
+      if(index.find(pair_s) == index.end()){
+        continue;
+      }else{
+        address = index.find(pair_s)->second;
+        file.open(random_file, ios::binary);
+        file.seekg(address*sizeof(ans));
+        file.read((char*)&ans,sizeof(ans));
+        file.close();
+        std::cout<<"Found"<<std::endl;
+        return ans;
+      }
+  }
+  std::cout<<"Not found"<<std::endl;
+  return ans;
+}
 
 int main(){
   Rating a{2,3363,4.0,1192913596};
   RandomFile rf("RandomFile");
   rf.update_csv("rating.csv");
   rf.insert(a);
-  rf.search(2,3363);
+  rf.search_openIndex(2,3363);
+  rf.search_fixedIndex(2,3363);
   rf.print_file();
 
 
