@@ -26,8 +26,12 @@ MainWindow::~MainWindow()
 void MainWindow::on_hashFile_clicked()
 {
     QString ratings_csv = ":/static/ratings.csv";
+    // abro el csv
+    // creo el index
     hash_index = HashIndex(ratings_csv);
+    // indico al programa que el index seleccionado es el hash
     index_selected = Hash;
+    // activo el botón que dice "New Query"
     ui->newQuery->setEnabled(true);
 }
 
@@ -48,6 +52,7 @@ void MainWindow::executeQuery(QPair<int, Rating> pair)
 {
     int query = pair.first;
     Rating rating;
+    // borro los resultados de la query anterior
     model_.clear();
     switch (query) {
         case Update:
@@ -66,11 +71,13 @@ void MainWindow::executeQuery(QPair<int, Rating> pair)
             if(index_selected == Hash)
             {
                 rating = hash_index.find(pair.second.userId, pair.second.movieId);
+                // agregar al modelo para que salga en la tabla
                 model_.append(rating);
             }
             else
             {
                 // find de random file
+                std::cout << "random find" << std::endl;
             }
             break;
         }

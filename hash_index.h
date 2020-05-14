@@ -72,6 +72,7 @@ public:
     {
         std::size_t n_r = 0;
         {
+            // usar qfile y qtextstream para abrir el csv
             QFile ifile(file_name);
             ifile.open(QIODevice::ReadOnly);
             QTextStream ifs(&ifile);
@@ -153,7 +154,7 @@ public:
                 b_pos = offset;
                 fs.read((char *)&b, sizeof(b));
             }
-
+            // saltear los buckets llenos
             while(b.next != 0 && b.filled == F_R_)
             {
                 fs.seekg(b.next);
@@ -162,6 +163,7 @@ public:
             }
             if(b.filled < F_R_)
             {
+                // caso en el que hay un bucket no lleno
                 std::size_t s = sizeof(b);
                 b.ratings[b.filled++] = r;
                 fs.seekp(b_pos);
@@ -170,10 +172,16 @@ public:
             }
             else
             {
+                // caso en el que todos los buckets del hash están llenos
                 {
+                    // voy al final del archivo
                     fs.seekp(0, std::ios_base::end);
                     Bucket new_b{};
+                    // agrega el rating en la pos 0
+                    // e incrementa el numero filled
                     new_b.ratings[new_b.filled++] = r;
+                    // el next del bucket b apunta al final del archivo
+                    // porque ahí voy a crear el nuevo bucket
                     b.next = fs.tellp();
                     fs.write((char *)&new_b, sizeof(new_b));
                     fs.flush();

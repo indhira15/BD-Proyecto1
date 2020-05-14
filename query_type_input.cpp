@@ -7,6 +7,7 @@
 
 QueryTypeInput::QueryTypeInput (QWidget *parent)
 {
+    // tamaño
     this->setWindowTitle("Query Type");
     int height = 150;
     int width = 360;
@@ -15,7 +16,7 @@ QueryTypeInput::QueryTypeInput (QWidget *parent)
                     width, height);
 //    this->setFixedSize(QSize(width, height));
     layout = new QHBoxLayout(this);
-
+// agregar botones
     findButton = new QPushButton("find");
     updateButton = new QPushButton("update");
     insertButton = new QPushButton("insert");
@@ -54,6 +55,8 @@ void QueryTypeInput::buttonClicked(QAbstractButton *button)
             rating = FindQueryDialog::getFields(this);
             pair.first = Find;
             pair.second = rating;
+            // emito la señal
+            // y esto llama a la función executeQuery en mainwindow.cpp
             emit queryCreated(pair);
             accept();
             break;
@@ -66,6 +69,8 @@ void QueryTypeInput::buttonClicked(QAbstractButton *button)
             rating = InputQueryDialog::getFields(this);
             pair.first = Update;
             pair.second = rating;
+            // emito la señal
+            // y esto llama a la función executeQuery en mainwindow.cpp
             emit queryCreated(pair);
             accept();
             break;
@@ -77,6 +82,8 @@ void QueryTypeInput::buttonClicked(QAbstractButton *button)
             rating = InputQueryDialog::getFields(this);
             pair.first = Insert;
             pair.second = rating;
+            // emito la señal
+            // y esto llama a la función executeQuery en mainwindow.cpp
             emit queryCreated(pair);
             accept();
             break;
