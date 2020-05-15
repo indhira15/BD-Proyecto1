@@ -84,6 +84,9 @@ public:
             std::string line;
             std::vector<std::string> v;
             std::getline(ifs, line);
+            int cnt = 1;
+            ofstream outFile;
+            outFile.open("hash_timeResults.csv");
             while(std::getline(ifs, line))
             {
                 line.erase( std::remove(line.begin(), line.end(), '\r'), line.end() );
@@ -95,7 +98,20 @@ public:
                             boost::lexical_cast<uint64_t>(v[1]),
                             (int)(std::stod(v[2])*10)/10.0,
                             boost::lexical_cast<uint64_t>(v[3]) };
-                insert(r, fs);
+                if(cnt == 10 || cnt == 100 || cnt == 1000 || cnt == 10000 || cnt == 100000 || cnt == 1000000){
+                  auto begin = chrono::high_resolution_clock::now();
+                  insert(r,fs);
+                  auto end = chrono::high_resolution_clock::now();
+
+                  outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << ",";
+
+                  begin = chrono::high_resolution_clock::now();    
+                  find(r.userId, r.movieId);
+                  end = chrono::high_resolution_clock::now();
+
+                  outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << endl;
+                }else{insert(r, fs);}
+                cnt++;
             }
         }
     }
