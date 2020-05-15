@@ -44,6 +44,7 @@ add_executable(file-organization
     rating.h
     hash_index.h
     sizes.h
+    randomFile.h
     query_type_input.h
     query_type_input.cpp
     input_query.h
