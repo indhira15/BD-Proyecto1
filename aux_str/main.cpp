@@ -9,6 +9,8 @@
 
 #include "Rating.h"
 
+#define RF_BLOCK_SIZE 4
+
 using namespace std;
 
 struct HashPair{
@@ -25,14 +27,16 @@ typedef pair<IDS,size_t> index_entry;
 
 
 class RandomFile{
-  unordered_map<IDS, size_t,HashPair> index;
+  
   size_t size;
   string random_file;
   string index_file;
   string info_file;
   size_t get_size();
   void set_size(size_t new_size);
+
 public:
+  unordered_map<IDS, size_t,HashPair> index;
   RandomFile()= default;
   RandomFile(string name){
     // inicializar los nombres
@@ -57,7 +61,10 @@ public:
   void print_file();
   void insert(Rating to_insert);
   void update_index();
-  Rating search(uint64_t user = 0, uint64_t movie = 0);
+  Rating search_openIndex(uint64_t user = 0, uint64_t movie = 0);
+  Rating search_fixedIndex(uint64_t user = 0, uint64_t movie = 0);
+  void read_index_from(size_t point);
+  void update(Rating r);
 };
 size_t RandomFile::get_size(){
   ifstream inFile;
@@ -95,11 +102,11 @@ void RandomFile::update_csv(string file_name){
     outIndex.open(this->index_file,ios::in | ios::binary | ios::app);
     string aux;
     size_t num_ratings = 0;
-    cout << get_size() <<endl;
     if(inFile.is_open()){
       getline(inFile,aux );
       Rating tmp;
       string str;
+      index_entry idx_tmp;
       while(getline(inFile,aux )){
         stringstream ss(aux);
         getline(ss,str,',');
@@ -113,6 +120,11 @@ void RandomFile::update_csv(string file_name){
         //insert in the binary file
         outFile.write((char*) &tmp, sizeof(tmp));
         // aqui se debe insertar en el index
+        idx_tmp.first.first = tmp.userId;
+        idx_tmp.first.second = tmp.movieId;
+        idx_tmp.second = num_ratings + get_size();
+        outIndex.write((char*)&idx_tmp,sizeof(idx_tmp));
+
         ++num_ratings;
       }
       set_size(num_ratings + get_size());
@@ -124,7 +136,6 @@ void RandomFile::update_csv(string file_name){
 
 void RandomFile::print_file(){
   ifstream inFile;
-  cout << get_size() <<endl;
   inFile.open(this->random_file, ios::binary);
   if(inFile.is_open()){
     Rating i;
@@ -173,13 +184,28 @@ void RandomFile::update_index(){
       index.insert({aux.first,aux.second});
     }
     indexFile.close();
+    return;
   }else{
     std::cout<<"Couldn't open the index file"<<std::endl;
     return;
   }
 }
 
-Rating RandomFile::search(uint64_t userid_s, uint64_t movieid_s){
+void RandomFile::read_index_from(size_t point){
+  ifstream indexFile;
+  indexFile.open(index_file, ios::binary);
+  if(indexFile.is_open()){
+    index_entry aux;
+    indexFile.seekg(point*sizeof(index_entry)*RF_BLOCK_SIZE);
+    for(size_t i = 0;i<RF_BLOCK_SIZE;i++){
+      if(indexFile.read((char*)&aux, sizeof(aux))){
+        index.insert({aux.first,aux.second});
+      }else{break;}
+    }
+  }
+}
+
+Rating RandomFile::search_openIndex(uint64_t userid_s, uint64_t movieid_s){
   Rating ans;
   IDS pair_s(userid_s,movieid_s);
   size_t address;
@@ -199,15 +225,73 @@ Rating RandomFile::search(uint64_t userid_s, uint64_t movieid_s){
   }
 }
 
+Rating RandomFile::search_fixedIndex(uint64_t userid_s, uint64_t movieid_s){
+  Rating ans;
+  IDS pair_s(userid_s,movieid_s);
+  size_t address;
+  ifstream file;
+  for(size_t i = 0; i<=get_size()/RF_BLOCK_SIZE;i++){
+      index.clear();
+      read_index_from(i);
+      auto result = index.find(pair_s);
+      for(auto& i : index){
+        cout<< i.first.first << "|" << i.first.second << "|" << i.second<<endl;
+      }
+      cout<<endl;
+      if(result == index.end()){
+        continue;
+      }
+      else{
+        address = index.find(pair_s)->second;
+        file.open(random_file, ios::binary);
+        file.seekg(address*sizeof(ans));
+        file.read((char*)&ans,sizeof(ans));
+        file.close();
+        std::cout<<"Found"<<std::endl;
+        return ans;
+      }
+  }
+  std::cout<<"Not found"<<std::endl;
+  return ans;
+}
+
+void RandomFile::update(Rating r){
+  IDS pair_s(r.userId,r.movieId);
+  size_t address;
+  ofstream file;
+  for(size_t i = 0; i<=get_size()/RF_BLOCK_SIZE;i++){
+      index.clear();  //limpia el index anterior
+      read_index_from(i);
+      if(index.find(pair_s) == index.end()){
+        continue;
+      }else{
+        address = index.find(pair_s)->second;
+        file.open(random_file, ios::binary | ios::in);
+        file.seekp(address*sizeof(r));
+        file.write((char*)&r,sizeof(r));
+        file.close();
+        std::cout<<"Updated"<<std::endl;
+        break;
+      }
+  std::cout<<"Not found"<<std::endl;
+  }
+}
+//outFile.write((char*)& to_insert, sizeof(to_insert));
 
 int main(){
   Rating a{2,3363,4.0,1192913596};
+  Rating b{2,3363,6.9,1111111111};
   RandomFile rf("RandomFile");
   rf.update_csv("rating.csv");
   rf.insert(a);
-  rf.search(2,3363);
   rf.print_file();
+  // rf.search_openIndex(2,3363);
+  // rf.search_fixedIndex(2,3363);
+  rf.update(b);
+  rf.print_file();
+  //rf.print_file();
 
+  cout<<"final size "<<rf.index.size()<<endl;
 
   return 0;
 }
