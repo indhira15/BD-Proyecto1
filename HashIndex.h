@@ -212,6 +212,7 @@ public:
     void
     update(Rating r)
     {
+        this->operationLock.lock();
         Bucket b{};
         long long b_pos = 0;
         long long offset = h(r) * sizeof(b);
@@ -244,11 +245,13 @@ public:
                 fs.read((char *)&b, sizeof(b));
             }
         }
+        this->operationLock.unlock();
     }
 
     Rating
     find(uint64_t userId, uint64_t movieId)
     {
+        this->operationLock.lock();
         Bucket b{};
         Rating r{userId, movieId};
         long long offset = (h(r) + 1) * sizeof(b);
@@ -277,6 +280,7 @@ public:
                 
             }
         }
+        this->operationLock.unlock();
     }
 };
 
