@@ -7,12 +7,12 @@
 #include <QSortFilterProxyModel>
 
 struct Rating {
-  uint64_t userId, movieId;
+  unsigned long long userId, movieId;
   double rating;
   QDateTime timestamp;
   Rating() = default;
 
-  Rating(const uint64_t& userId, const uint64_t& movieId, const double& rating, const uint64_t& unixtime):
+  Rating(const unsigned long long& userId, const unsigned long long& movieId, const double& rating, const unsigned long long& unixtime):
       userId(userId), movieId(movieId), rating(rating)
   {
       timestamp.setTime_t(unixtime);
