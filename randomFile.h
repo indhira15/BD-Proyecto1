@@ -12,8 +12,7 @@
 #include <QFile>
 #include <QTextStream>
 #include <QStringList>
-#include <mutex>
-#include <thread>
+
 #include "rating.h"
 
 #define RF_BLOCK_SIZE 4
@@ -37,7 +36,6 @@ class RandomFile{
   string random_file;
   string index_file;
   string info_file;
-  mutex size_lock;
 
   void set_size(size_t new_size){
     ofstream outFile;
@@ -175,39 +173,7 @@ public:
     }
   }
 
-  void insert_parallel(Rating to_insert){
-    //Write on data file
-    ofstream outFile;
-    int position;
-    outFile.open(random_file, ios::in | ios::binary);
-    if(outFile.is_open()){
-        this->size_lock.lock();
-        position = get_size();
-        set_size(position+1);
-        this->size_lock.unlock();
-        outFile.seekp(position*sizeof(Rating));
-      outFile.write((char*)& to_insert, sizeof(to_insert));
-      outFile.close();
-    }else{
-      cout<<"Couldn't open the data file"<<endl;
-    }
 
-    //Write on index file
-    index_entry entry;
-    entry.first.first = to_insert.userId;
-    entry.first.second = to_insert.movieId;
-    entry.second = position;
-    ofstream indexFile;
-    indexFile.open(index_file, ios::in| ios::binary);
-    if(indexFile.is_open()){
-      indexFile.seekp(position*sizeof(entry));
-      indexFile.write((char*)& entry, sizeof(entry));
-      indexFile.close();
-    }else{
-      cout<<"Couldn't open the index file"<<endl;
-      return;
-    }
-  }
 
 
   void update_index(){
