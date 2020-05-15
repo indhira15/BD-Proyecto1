@@ -95,12 +95,12 @@ void RandomFile::open(string name){
 }
 
 void RandomFile::update_csv(QString file_name){
-    ifstream inFile;
+//    ifstream inFile;
     ofstream outFile, outIndex, outI;
     //open the csv file
-    QFile infile(file_name);
-    infile.open(QIODevice::ReadOnly);
-    QTextStream ifs(&infile);
+    QFile ifile(file_name);
+    ifile.open(QIODevice::ReadOnly);
+    QTextStream ifs(&ifile);
 
     //inFile.open(file_name);
     outFile.open(this->random_file,ios::in | ios::binary | ios::app);
@@ -108,12 +108,15 @@ void RandomFile::update_csv(QString file_name){
     string aux;
     size_t num_ratings = 0;
 //    if(ifile.is_open()){
-      getline(inFile,aux );
+//      getline(inFile,aux );
+      ifs.readLine();
       float a,b,c,d;
       string str;
       index_entry idx_tmp;
-      while(getline(inFile,aux )){
+     // while(getline(inFile,aux )){
+     while(!ifs.atEnd()){
         stringstream ss(aux);
+        aux = ifs.readLine().toStdString();
         getline(ss,str,',');
         a = stof(str);
         getline(ss,str,',');
@@ -135,8 +138,8 @@ void RandomFile::update_csv(QString file_name){
         ++num_ratings;
       }
       set_size(num_ratings + get_size());
-      inFile.close();
       outFile.close();
+      ifile.close();
       outIndex.close();
   //   }else cout << "Can't open the file "<<file_name <<endl;
 }
