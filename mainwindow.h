@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <rating.h>
 #include "hash_index.h"
+#include "randomFile.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -15,6 +16,7 @@ class MainWindow : public QMainWindow
     RatingModel model_;
     QSortFilterProxyModel proxy_;
     HashIndex hash_index;
+    RandomFile random_file;
     enum Query {
         Find = 1,
         Update = 2,

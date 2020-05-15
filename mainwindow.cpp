@@ -3,6 +3,7 @@
 #include <QInputDialog>
 #include<hash_index.h>
 #include <iostream>
+#include <randomFile.h>
 #include "query_type_input.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -37,7 +38,10 @@ void MainWindow::on_hashFile_clicked()
 
 void MainWindow::on_randomFile_clicked()
 {
+    QString ratings_csv = ":/static/ratings.csv";
+    random_file = RandomFile(ratings_csv);
     index_selected = Random;
+    ui->newQuery->setEnabled(true);
 }
 
 
@@ -62,7 +66,7 @@ void MainWindow::executeQuery(QPair<int, Rating> pair)
                 hash_index.update(pair.second);
             }
             else{
-                // update de random file
+                random_file.update(pair.second);
             }
             break;
         }
@@ -76,8 +80,9 @@ void MainWindow::executeQuery(QPair<int, Rating> pair)
             }
             else
             {
-                // find de random file
-                std::cout << "random find" << std::endl;
+                rating = random_file.search_openIndex(pair.second.userId, pair.second.movieId);
+                //rating = random_file.search_fixedIndex(pair.second.userId, pair.second.movieId);
+                model_.append(rating);
             }
             break;
         }
@@ -89,7 +94,7 @@ void MainWindow::executeQuery(QPair<int, Rating> pair)
             }
             else
             {
-                // insert de random file
+                random_file.insert(pair.second);
             }
             break;
         }
