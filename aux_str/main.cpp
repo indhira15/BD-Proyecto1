@@ -5,11 +5,12 @@
 #include <unordered_map>
 #include <iomanip>
 #include <iostream>
+#include <chrono>
 #include <bits/stdc++.h>
 
 #include "Rating.h"
 
-#define RF_BLOCK_SIZE 4
+#define RF_BLOCK_SIZE 100000
 
 using namespace std;
 
@@ -61,10 +62,11 @@ public:
   void print_file();
   void insert(Rating to_insert);
   void update_index();
-  Rating search_openIndex(uint64_t user = 0, uint64_t movie = 0);
-  Rating search_fixedIndex(uint64_t user = 0, uint64_t movie = 0);
+  Rating find_openIndex(uint64_t user = 0, uint64_t movie = 0);
+  Rating find_fixedIndex(uint64_t user = 0, uint64_t movie = 0);
   void read_index_from(size_t point);
   void update(Rating r);
+  void MeasureTime();
 };
 size_t RandomFile::get_size(){
   ifstream inFile;
@@ -155,6 +157,7 @@ void RandomFile::insert(Rating to_insert){
     outFile.close();
   }else{
     cout<<"Couldn't open the data file"<<endl;
+    return;
   }
 
   //Write on index file
@@ -205,7 +208,7 @@ void RandomFile::read_index_from(size_t point){
   }
 }
 
-Rating RandomFile::search_openIndex(uint64_t userid_s, uint64_t movieid_s){
+Rating RandomFile::find_openIndex(uint64_t userid_s, uint64_t movieid_s){
   Rating ans;
   IDS pair_s(userid_s,movieid_s);
   size_t address;
@@ -225,7 +228,7 @@ Rating RandomFile::search_openIndex(uint64_t userid_s, uint64_t movieid_s){
   }
 }
 
-Rating RandomFile::search_fixedIndex(uint64_t userid_s, uint64_t movieid_s){
+Rating RandomFile::find_fixedIndex(uint64_t userid_s, uint64_t movieid_s){
   Rating ans;
   IDS pair_s(userid_s,movieid_s);
   size_t address;
@@ -234,10 +237,6 @@ Rating RandomFile::search_fixedIndex(uint64_t userid_s, uint64_t movieid_s){
       index.clear();
       read_index_from(i);
       auto result = index.find(pair_s);
-      for(auto& i : index){
-        cout<< i.first.first << "|" << i.first.second << "|" << i.second<<endl;
-      }
-      cout<<endl;
       if(result == index.end()){
         continue;
       }
@@ -276,19 +275,75 @@ void RandomFile::update(Rating r){
   std::cout<<"Not found"<<std::endl;
   }
 }
-//outFile.write((char*)& to_insert, sizeof(to_insert));
+
+void RandomFile::MeasureTime(){
+
+  ifstream inFile;
+  ofstream outFile;
+  RandomFile test("time_test");
+
+  inFile.open("1mill.csv");
+  outFile.open("timeResults.csv");
+  vector<Rating> ratings;
+  string aux;
+  if(inFile.is_open()){
+    getline(inFile,aux);
+    Rating tmp;
+    string str;
+    while(getline(inFile,aux)){
+      stringstream ss(aux);
+      getline(ss,str,',');
+      tmp.userId = stof(str);
+      getline(ss,str,',');
+      tmp.movieId = stof(str);
+      getline(ss,str,',');
+      tmp.rating = stof(str);
+      getline(ss,str,',');
+      tmp.timestamp = stof(str);
+      ratings.push_back(tmp);
+    }
+  }
+
+    for(int j = 0; j<ratings.size();j++){
+
+      if(j == 10 || j == 100 || j == 1000 || j == 10000 || j == 100000 || j == 1000000){
+
+      auto begin = chrono::high_resolution_clock::now();
+      test.insert(ratings[j]);
+      auto end = chrono::high_resolution_clock::now();
+
+      outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << ",";
+
+      begin = chrono::high_resolution_clock::now();    
+      test.find_fixedIndex(ratings[j].userId,ratings[j].movieId);
+      end = chrono::high_resolution_clock::now();
+
+      outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << endl;
+
+      }else{
+        test.insert(ratings[j]);
+      }      
+
+
+    }
+
+  outFile.close();
+  inFile.close();
+  test.print_file();
+}
 
 int main(){
-  Rating a{2,3363,4.0,1192913596};
-  Rating b{2,3363,6.9,1111111111};
+  // Rating a{2,3363,4.0,1192913596};
+  // Rating b{2,3363,6.9,1111111111};
   RandomFile rf("RandomFile");
-  rf.update_csv("rating.csv");
-  rf.insert(a);
+  rf.MeasureTime();
+  // rf.update_csv("rating.csv");
+  // rf.insert(a);
   rf.print_file();
-  // rf.search_openIndex(2,3363);
-  // rf.search_fixedIndex(2,3363);
-  rf.update(b);
-  rf.print_file();
+  // rf.find_openIndex(2,3363);
+  // rf.find_fixedIndex(2,3363);
+  // rf.update(b);
+  // rf.print_file();
   //rf.print_file();
 
   cout<<"final size "<<rf.index.size()<<endl;
