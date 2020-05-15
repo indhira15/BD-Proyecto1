@@ -8,6 +8,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <mutex>
+#include <thread>
 
 #include "Rating.h"
 #include "sizes.h"
@@ -37,6 +39,7 @@ private:
     std::size_t B;
     static std::size_t constexpr f_r = F_R_;
     static constexpr float d = D_;
+    std::mutex operationLock;
 
     void
     init()
@@ -95,7 +98,7 @@ public:
                             boost::lexical_cast<uint64_t>(v[1]),
                             (int)(std::stod(v[2])*10)/10.0,
                             boost::lexical_cast<uint64_t>(v[3]) };
-                insert(r, fs);
+                insertF(r, fs);
             }
         }
     }
@@ -126,12 +129,14 @@ public:
     insert(Rating r)
     {
         std::fstream fs("data_hash.dat", fs.binary|fs.in|fs.out);
-        return insert(r, fs);
+        return insertF(r, fs);
     }
 
     void
-    insert(Rating r, std::fstream& fs)
+    insertF(Rating r, std::fstream& fs)
     {
+        this->operationLock.lock();
+        std::cout << "inserting rating " << r.userId << " " << r.movieId << std::endl;
         Bucket b{};
         long long b_pos = 0;
         long long offset = h(r) * sizeof(b);
@@ -179,6 +184,8 @@ public:
                 }
             }
         }
+        std::cout << "finished insertion of " << r.userId << " " << r.movieId << std::endl;
+        this->operationLock.unlock();
     }
 
     void

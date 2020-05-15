@@ -31,6 +31,10 @@ boost/tokenizer.hpp
 -
 boost/lexical_cast.hpp
 -
+mutex
+-
+thread
+-
 Rating.h
 /Users/userr2232/Documents/miscProjects/UTEC/databases/project/Rating.h
 sizes.h
@@ -42,6 +46,10 @@ sizes.h
 iostream
 -
 sstream
+-
+vector
+-
+thread
 -
 boost/tokenizer.hpp
 -

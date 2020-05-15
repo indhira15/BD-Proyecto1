@@ -1,5 +1,7 @@
 #include <iostream>
 #include <sstream>
+#include <vector>
+#include <thread>
 #include <boost/tokenizer.hpp>
 
 #include "Bucket.h"
@@ -81,6 +83,19 @@ main(int argc, char* argv[])
     std::cout << r.userId << " " << r.movieId << " " << r.rating << std::endl;
 */
 
-    // Falta cargar el HashIndex de disk (esto lo haré si sobra tiempo)
+    // Testing HashIndex
+    std::vector<Rating> ratings = {
+        { 1,307,3.5,1256677221 }, { 2,308,4,1256677221 },
+        { 3,309,4.5,1256677221 }, { 4,310,5,1256677221 },
+        { 5,311,1.5,1256677221 }, { 6,312,2.5,1256677221 }
+    };
+    HashIndex index(270);
+    std::vector<std::thread> threads(ratings.size());
+    for(size_t i = 0; i < ratings.size(); ++i) {
+        threads[i] = std::thread(&HashIndex::insert, &index, ratings[i]);
+    }
+    for(size_t i = 0; i < ratings.size(); ++i) {
+        threads[i].join();
+    }
     return 0;
 }
