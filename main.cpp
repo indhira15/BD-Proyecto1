@@ -7,6 +7,7 @@
 #include "Bucket.h"
 #include "Rating.h"
 #include "HashIndex.h"
+#include "randomFile.h"
 
 int
 main(int argc, char* argv[])
@@ -93,6 +94,14 @@ main(int argc, char* argv[])
     std::vector<std::thread> threads(ratings.size());
     for(size_t i = 0; i < ratings.size(); ++i) {
         threads[i] = std::thread(&HashIndex::insert, &index, ratings[i]);
+    }
+    for(size_t i = 0; i < ratings.size(); ++i) {
+        threads[i].join();
+    }
+
+    RandomFile rf("static/ratings.csv");
+    for(size_t i = 0; i < ratings.size(); ++i) {
+        threads[i] = std::thread(&RandomFile::insert, &rf, ratings[i]);
     }
     for(size_t i = 0; i < ratings.size(); ++i) {
         threads[i].join();
