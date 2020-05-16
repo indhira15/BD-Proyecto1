@@ -87,6 +87,9 @@ public:
             std::string line;
             std::vector<std::string> v;
             std::getline(ifs, line);
+            int cnt = 1;
+            ofstream outFile;
+            outFile.open("hash_timeResults.csv");
             while(std::getline(ifs, line))
             {
                 line.erase( std::remove(line.begin(), line.end(), '\r'), line.end() );
