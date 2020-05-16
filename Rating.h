@@ -3,10 +3,10 @@
 
 struct Rating
 {
-    uint64_t userId;
-    uint64_t movieId;
+    unsigned long long userId;
+    unsigned long long movieId;
     double rating;
-    uint64_t timestamp;
+    unsigned long long timestamp;
     Rating() = default;
 
     bool
@@ -14,6 +14,7 @@ struct Rating
     {
         return userId == rhs.userId && movieId == rhs.movieId;
     }
+
 };
 
 #endif /* RATING_H */

@@ -8,6 +8,8 @@
 #include <boost/functional/hash.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/lexical_cast.hpp>
+#include <mutex>
+#include <thread>
 
 #include "Rating.h"
 #include "sizes.h"
@@ -37,6 +39,7 @@ private:
     std::size_t B;
     static std::size_t constexpr f_r = F_R_;
     static constexpr float d = D_;
+    std::mutex operationLock;
 
     void
     init()
@@ -98,20 +101,7 @@ public:
                             boost::lexical_cast<uint64_t>(v[1]),
                             (int)(std::stod(v[2])*10)/10.0,
                             boost::lexical_cast<uint64_t>(v[3]) };
-                if(cnt == 10 || cnt == 100 || cnt == 1000 || cnt == 10000 || cnt == 100000 || cnt == 1000000){
-                  auto begin = chrono::high_resolution_clock::now();
-                  insert(r,fs);
-                  auto end = chrono::high_resolution_clock::now();
-
-                  outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << ",";
-
-                  begin = chrono::high_resolution_clock::now();    
-                  find(r.userId, r.movieId);
-                  end = chrono::high_resolution_clock::now();
-
-                  outFile << chrono::duration_cast<chrono::nanoseconds>(end - begin).count() << endl;
-                }else{insert(r, fs);}
-                cnt++;
+                insertF(r, fs);
             }
         }
     }
@@ -142,12 +132,14 @@ public:
     insert(Rating r)
     {
         std::fstream fs("data_hash.dat", fs.binary|fs.in|fs.out);
-        return insert(r, fs);
+        return insertF(r, fs);
     }
 
     void
-    insert(Rating r, std::fstream& fs)
+    insertF(Rating r, std::fstream& fs)
     {
+        this->operationLock.lock();
+        std::cout << "inserting rating " << r.userId << " " << r.movieId << std::endl;
         Bucket b{};
         long long b_pos = 0;
         long long offset = h(r) * sizeof(b);
@@ -195,6 +187,8 @@ public:
                 }
             }
         }
+        std::cout << "finished insertion of " << r.userId << " " << r.movieId << std::endl;
+        this->operationLock.unlock();
     }
 
     void
@@ -221,6 +215,7 @@ public:
     void
     update(Rating r)
     {
+        this->operationLock.lock();
         Bucket b{};
         long long b_pos = 0;
         long long offset = h(r) * sizeof(b);
@@ -253,11 +248,13 @@ public:
                 fs.read((char *)&b, sizeof(b));
             }
         }
+        this->operationLock.unlock();
     }
 
     Rating
     find(uint64_t userId, uint64_t movieId)
     {
+        this->operationLock.lock();
         Bucket b{};
         Rating r{userId, movieId};
         long long offset = (h(r) + 1) * sizeof(b);
@@ -286,6 +283,7 @@ public:
                 
             }
         }
+        this->operationLock.unlock();
     }
 };
 
